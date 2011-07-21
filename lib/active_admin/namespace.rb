@@ -127,13 +127,22 @@ module ActiveAdmin
     end
 
     def unload_resources!
+      new_resources = {}
       resources.each do |name, config|
         parent = (module_name || 'Object').constantize
         const_name = config.controller_name.split('::').last
         # Remove the const if its been defined
-        parent.send(:remove_const, const_name) if parent.const_defined?(const_name)
+        if should_unload? const_name
+          parent.send(:remove_const, const_name) if parent.const_defined?(const_name)
+        else
+          new_resources[name] = config
+        end
       end
-      @resources = {}
+      @resources = new_resources
+    end
+
+    def should_unload?(const_name)
+      Application.resource_tracker.unload_controller?(const_name)
     end
 
     def unload_dashboard!

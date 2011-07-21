@@ -1,4 +1,5 @@
 require 'active_admin/router'
+require 'active_admin/resource_tracker'
 require 'active_admin/helpers/settings'
 
 module ActiveAdmin
@@ -88,6 +89,8 @@ module ActiveAdmin
 
     # Stores if everything has been loaded or we need to reload
     @@loaded = false
+    cattr_accessor :resource_tracker
+    @@resource_tracker = ResourceTracker.new
 
     # Returns true if all the configuration files have been loaded.
     def loaded?
@@ -101,7 +104,6 @@ module ActiveAdmin
     # to allow for changes without having to restart the server.
     def unload!
       namespaces.values.each{|namespace| namespace.unload! }
-      self.namespaces = {}
       @@loaded = false
     end
 
@@ -117,7 +119,11 @@ module ActiveAdmin
       return false if loaded?
 
       # Load files
-      files_in_load_path.each{|file| load file }
+      files_to_load = files_in_load_path.select do |path|
+        resource_tracker.changed?(path)
+      end
+
+      files_to_load.each{|file| load file }
 
       # If no configurations, let's make sure you can still login
       load_default_namespace if namespaces.values.empty?
