@@ -132,7 +132,7 @@ module ActiveAdmin
         parent = (module_name || 'Object').constantize
         const_name = config.controller_name.split('::').last
         # Remove the const if its been defined
-        if should_unload? const_name
+        if should_unload? config
           parent.send(:remove_const, const_name) if parent.const_defined?(const_name)
         else
           new_resources[name] = config
@@ -141,8 +141,8 @@ module ActiveAdmin
       @resources = new_resources
     end
 
-    def should_unload?(const_name)
-      Application.resource_tracker.unload_controller?(const_name)
+    def should_unload? config
+      Application.resource_tracker.unload? config.resource
     end
 
     def unload_dashboard!

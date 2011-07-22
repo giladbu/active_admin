@@ -17,11 +17,15 @@ module ActiveAdmin
       changed
     end
 
-    def unload_controller?(controller_name)
+    def unload? (resource)
+      #active_admin comments registers once, so dont unload
+      return false if resource.ancestors.include? ActiveAdmin::Comment
+
+      #unload if changed
       @mtimes.keys.each do |path|
-        if /([\w_]+)\.rb$/.match(path) 
-          resource_name =  $1.classify.pluralize+"Controller"
-          if resource_name == controller_name
+        if /([\w_]+)\.rb$/.match(path)
+          resource_name =  $1.classify
+          if resource_name == resource.to_s
             begin
               mtime = File.mtime(path)
               return mtime != @mtimes[path]
