@@ -31,16 +31,19 @@ module ActiveAdmin
     # a look at ActiveAdmin::ViewFactory
     setting :view_factory, ActiveAdmin::ViewFactory.new
 
-    # DEPRECATED: This option is deprecated and will be removed. Use
-    # the #allow_comments_in option instead
-    attr_accessor :admin_notes
-
     # The method to call in controllers to get the current user
     setting :current_user_method, false
 
     # The method to call in the controllers to ensure that there
     # is a currently authenticated admin user
     setting :authentication_method, false
+
+    # The path to log user's out with. If set to a symbol, we assume
+    # that it's a method to call which returns the path
+    setting :logout_link_path, :destroy_admin_user_session_path
+
+    # The method to use when generating the link for user logout
+    setting :logout_link_method, :delete
 
     # Active Admin makes educated guesses when displaying objects, this is
     # the list of methods it tries calling in order
@@ -58,6 +61,11 @@ module ActiveAdmin
     # @deprecated The default sort order for index pages
     deprecated_setting :default_sort_order, 'id_desc'
 
+    # DEPRECATED: This option is deprecated and will be removed. Use
+    # the #allow_comments_in option instead
+    attr_accessor :admin_notes
+
+
     include AssetRegistration
 
     def initialize
@@ -72,13 +80,14 @@ module ActiveAdmin
 
     # Registers a brand new configuration for the given resource.
     def register(resource, options = {}, &block)
-      namespace_name = options[:namespace] == false ? :root : (options[:namespace] || default_namespace || :root)
+      namespace_name = options.has_key?(:namespace) ? options[:namespace] : default_namespace
       namespace = find_or_create_namespace(namespace_name)
       namespace.register(resource, options, &block)
     end
 
     # Creates a namespace for the given name
     def find_or_create_namespace(name)
+      name ||= :root
       return namespaces[name] if namespaces[name]
       namespace = Namespace.new(self, name)
       ActiveAdmin::Event.dispatch ActiveAdmin::Namespace::RegisterEvent, namespace
