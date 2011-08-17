@@ -7,7 +7,9 @@ module ActiveAdmin
       {
         :path => ActiveAdmin.application.default_namespace,
         :controllers => ActiveAdmin::Devise.controllers,
-        :path_names => { :sign_in => 'login', :sign_out => "logout" }
+        :path_names => { :sign_in => 'login', :sign_out => "logout" },
+        # Support sign_out via :get and Devise default (:get or :delete depending on version)
+        :sign_out_via => [::Devise.sign_out_via, :get].flatten.uniq
       }
     end
 
@@ -27,7 +29,11 @@ module ActiveAdmin
 
       # Redirect to the default namespace on logout
       def root_path
-        "/#{ActiveAdmin.application.default_namespace}"
+        if ActiveAdmin.application.default_namespace
+          "/#{ActiveAdmin.application.default_namespace}"
+        else
+          "/"
+        end
       end
     end
 
