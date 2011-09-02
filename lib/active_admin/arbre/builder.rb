@@ -1,5 +1,24 @@
 module Arbre
-  module HTML
+
+  # Include this module in any context to start building html.
+  #
+  #   assigns = {}
+  #   include Arbre::Builder
+  #   span("foo").to_s #=> "<span>foo</span>
+  #
+  # When you include the module, you are required to setup 2 variables:
+  #
+  # * assigns: This is a hash that includes local variables
+  # * helpers: This is an object that provides helper methods to all
+  #              objects within the context.
+  module Builder
+
+    # Retrieve the current DOM context.
+    #
+    # If no `@__current_dom_element__` has been set, this method will
+    # setup the initial context.
+    #
+    # @return [Arbre::Element] the current element that is in context
     def current_dom_context
       @__current_dom_element__ ||= Arbre::Context.new(assigns, helpers)
       @__current_dom_element__.current_dom_context
@@ -9,6 +28,14 @@ module Arbre
       @_helpers
     end
 
+    # Implements the method lookup chain. When you call a method that
+    # doesn't exist, we:
+    #
+    #  1. Try to call the method on the current DOM context
+    #  2. Return an assigned variable of the same name
+    #  3. Call the method on the helper object
+    #  4. Call super
+    #
     def method_missing(name, *args, &block)
       if current_dom_context.respond_to?(name)
         current_dom_context.send name, *args, &block
@@ -74,7 +101,7 @@ module Arbre
       # Inserts a text node if the tag is a string
       def insert_text_node_if_string(tag)
         if tag.is_a?(String)
-          current_dom_context << TextNode.from_string(tag)
+          current_dom_context << Arbre::HTML::TextNode.from_string(tag)
         end
       end
     end
